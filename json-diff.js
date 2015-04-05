@@ -27,15 +27,32 @@ function areJsonsEqual(left, right) {
 }
 
 function getDiffRepresentation(left, right) {
-
+  
+  function getType(v) {
+    var type = typeof(v);
+    if (type === 'number' || type === 'string' || type === 'boolean') return 'scalar';
+    if (type === 'object') {
+      if (v.constructor === Array) return 'array';
+      else return 'object';
+    }
+  }
+  
+  function getScalarsDiff(left, right) {
+    if(left !== right) return createReplaceEntry(left, right);
+    else return createDiffEntry(left, "NONE");
+  }
+  
   function getArraysDiff(left, right) {
     var result = [];
     for(var i = 0;i < left.length;i++) {
-      if(left[i] !== right[i]) {
-	result.push(createDiffEntry(left[i], "ADD"));
-	result.push(createDiffEntry(right[i], "REMOVE"));
+      var leftType = getType(left[i]);
+      var rightType = getType(right[i]);
+      if(leftType === rightType) {
+	if(leftType === 'scalar') result.push(getScalarsDiff(left[i], right[i]));
+	else if(leftType === 'object') result.push(getJsonsDiff(left[i], right[i]));
+	else result.push(getArraysDiff(left[i], right[i]));
       } else {
-	result.push(createDiffEntry(left[i], "NONE"));
+	throw "Functionality not yet implemented !";// TODO two different types so nothing to look on.. scroll further...
       }
     }
 
@@ -53,8 +70,14 @@ function getDiffRepresentation(left, right) {
 
     for(var key in left) {
       if(!right.hasOwnProperty(key)) result[key] = createDiffEntry(left[key], "ADD");
-      else if(left[key] !== right[key]) result[key] = createReplaceEntry(left[key], right[key]);
-      else result[key] = createDiffEntry(left[key], "NONE");
+      else {
+	var leftType = getType(left[key]);
+	var rightType = getType(right[key]);
+
+	if(leftType === 'scalar') result[key] = getScalarsDiff(left[key], right[key]);
+	else if(leftType === 'object') result[key] = getJsonsDiff(left[key], right[key]);
+	else result[key] = getArraysDiff(left[key], right[key]);
+      }
     }
 
     for(var key in right) {
@@ -83,5 +106,5 @@ function getDiffRepresentation(left, right) {
 
   if(leftJson instanceof Array && rightJson instanceof Array) return getArraysDiff(leftJson, rightJson);
   else if(!(leftJson instanceof Array) && !(rightJson instanceof Array)) return getJsonsDiff(leftJson, rightJson);
-  else throw "Functionality not yet implemented !";
+  else throw "Functionality not yet implemented !"; // TODO need to handle that - nothing in common
 }
