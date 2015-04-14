@@ -69,12 +69,42 @@ describe("Get Json diff representation", function() {
     expect(result[0].oldValue).toEqual(3);
     expect(result[1].value).toEqual(2);
     expect(result[1].diffType).toEqual("NONE");
-    expect(result[2]["key1"].value).toEqual(234);
-    expect(result[2]["key1"].diffType).toEqual("ADD");
-    expect(result[2]["key2"].value).toEqual("val");
-    expect(result[2]["key2"].diffType).toEqual("REPLACE");
-    expect(result[2]["key2"].oldValue).toEqual(234);
-    expect(result[2]["key3"].value).toEqual("val");
-    expect(result[2]["key3"].diffType).toEqual("REMOVE");
+    expect(result[2].value["key1"].value).toEqual(234);
+    expect(result[2].value["key1"].diffType).toEqual("ADD");
+    expect(result[2].value["key2"].value).toEqual("val");
+    expect(result[2].value["key2"].diffType).toEqual("REPLACE");
+    expect(result[2].value["key2"].oldValue).toEqual(234);
+    expect(result[2].value["key3"].value).toEqual("val");
+    expect(result[2].value["key3"].diffType).toEqual("REMOVE");
+  });
+
+  it("Array of arrays and empty flat array should be different", function() {
+    var result = getDiffRepresentation("[]", "[[],[]]");
+    alert(JSON.stringify(result));
+    expect(result).toEqual(jasmine.any(Array));
+    expect(result[0]["diffType"]).toBe("REMOVE");
+    expect(result[0]["value"]).toEqual(jasmine.any(Array));
+    expect(result[0]["value"].length).toEqual(0);
+    expect(result[1]["diffType"]).toBe("REMOVE");
+    expect(result[1]["value"]).toEqual(jasmine.any(Array));
+    expect(result[1]["value"].length).toEqual(0);
+  });
+
+  it("Array and JSON object have nothing in common so should throw exception", function() {
+    var call = function() {
+      return getDiffRepresentation("[]", "{}");
+    };
+    expect(call).toThrow();
+  });
+
+  it("Two similar with small difference hidden in depth should be different", function() {
+    var result = getDiffRepresentation("{\"a\":{\"b\":{\"c\":\"d\"}}}", "{\"a\":{\"b\":{\"c\":\"e\"}}}");
+    //alert(JSON.stringify(result));
+
+    expect(result["a"]["diffType"]).toBe("NONE");
+    expect(result["a"]["value"]["b"]["diffType"]).toBe("NONE");
+    expect(result["a"]["value"]["b"]["value"]["c"]["diffType"]).toBe("REPLACE");
+    expect(result["a"]["value"]["b"]["value"]["c"]["value"]).toBe("d");
+    expect(result["a"]["value"]["b"]["value"]["c"]["oldValue"]).toBe("e");
   });
 });

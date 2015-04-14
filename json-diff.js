@@ -27,6 +27,12 @@ function areJsonsEqual(left, right) {
 }
 
 function getDiffRepresentation(left, right) {
+
+  // GLOBAL CONSTANTS
+  var ADD = "ADD";
+  var NONE = "NONE";
+  var REMOVE = "REMOVE";
+  var REPLACE = "REPLACE";
   
   function getType(v) {
     var type = typeof(v);
@@ -39,27 +45,27 @@ function getDiffRepresentation(left, right) {
   
   function getScalarsDiff(left, right) {
     if(left !== right) return createReplaceEntry(left, right);
-    else return createDiffEntry(left, "NONE");
+    else return createDiffEntry(left, NONE);
   }
   
   function getArraysDiff(left, right) {
     var result = [];
-    for(var i = 0;i < left.length;i++) {
+    var minLength = Math.min(left.length, right.length);
+    for(var i = 0;i < minLength;i++) {
       var leftType = getType(left[i]);
       var rightType = getType(right[i]);
       if(leftType === rightType) {
-	if(leftType === 'scalar') result.push(getScalarsDiff(left[i], right[i]));
-	else if(leftType === 'object') result.push(getJsonsDiff(left[i], right[i]));
-	else result.push(getArraysDiff(left[i], right[i]));
+        if(leftType === 'scalar') result.push(getScalarsDiff(left[i], right[i]));
+        else if(leftType === 'object') result.push(createDiffEntry(getJsonsDiff(left[i], right[i]), NONE));
+        else result.push(createDiffEntry(getArraysDiff(left[i], right[i]), NONE));
       } else {
-	throw "Functionality not yet implemented !";// TODO two different types so nothing to look on.. scroll further...
+        result.push(createReplaceEntry(left[i], right[i]));
       }
     }
 
-    if(left.length < right.length) {
-      for(var i = left.length;i < right.length ;i++) {
-	result.push(createDiffEntry(right[i], "REMOVE"));
-      }
+    var excessArrayInfo = left.length < right.length ? {"array":right, "operation":REMOVE} : {"array":left, "operation":ADD};
+    for(var i = minLength;i < excessArrayInfo["array"].length ;i++) {
+      result.push(createDiffEntry(excessArrayInfo["array"][i], excessArrayInfo["operation"]));
     }
 
     return result;
@@ -69,19 +75,22 @@ function getDiffRepresentation(left, right) {
     var result = {};
 
     for(var key in left) {
-      if(!right.hasOwnProperty(key)) result[key] = createDiffEntry(left[key], "ADD");
+      if(!right.hasOwnProperty(key)) result[key] = createDiffEntry(left[key], ADD);
       else {
-	var leftType = getType(left[key]);
-	var rightType = getType(right[key]);
-
-	if(leftType === 'scalar') result[key] = getScalarsDiff(left[key], right[key]);
-	else if(leftType === 'object') result[key] = getJsonsDiff(left[key], right[key]);
-	else result[key] = getArraysDiff(left[key], right[key]);
+        var leftType = getType(left[key]);
+        var rightType = getType(right[key]);
+        if(leftType === rightType) {
+          if (leftType === 'scalar') result[key] = getScalarsDiff(left[key], right[key]);
+          else if (leftType === 'object') result[key] = createDiffEntry(getJsonsDiff(left[key], right[key]), NONE);
+          else result[key] = createDiffEntry(getArraysDiff(left[key], right[key]), NONE);
+        } else {
+          result[key] = createReplaceEntry(left[key], right[key]);
+        }
       }
     }
 
     for(var key in right) {
-      if(!result.hasOwnProperty(key)) result[key] = createDiffEntry(right[key], "REMOVE");
+      if(!result.hasOwnProperty(key)) result[key] = createDiffEntry(right[key], REMOVE);
     }
     return result;
   }
@@ -97,7 +106,7 @@ function getDiffRepresentation(left, right) {
     return {
       "value": val,
       "oldValue": oldVal,
-      "diffType": "REPLACE"
+      "diffType": REPLACE
     };
   }
 
@@ -106,5 +115,5 @@ function getDiffRepresentation(left, right) {
 
   if(leftJson instanceof Array && rightJson instanceof Array) return getArraysDiff(leftJson, rightJson);
   else if(!(leftJson instanceof Array) && !(rightJson instanceof Array)) return getJsonsDiff(leftJson, rightJson);
-  else throw "Functionality not yet implemented !"; // TODO need to handle that - nothing in common
+  else throw "Nothing in common !";
 }
