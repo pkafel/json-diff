@@ -1,38 +1,3 @@
-describe("Json diff", function() {
-
-  it("Two empty arrays should be equal", function() {
-    expect(areJsonsEqual("[]", "[]")).toBe(true);
-  });
-
-  it("Two empty JSON objects should be equal", function() {
-    expect(areJsonsEqual("{}", "{}")).toBe(true);
-  });
-
-  it("Array and Json objest should not be equal", function() {
-    expect(areJsonsEqual("[]", "{}")).toBe(false);
-  });
-  
-  it("Two arrays with the same elements but in different order should not be equal ", function() {
-    expect(areJsonsEqual("[1,2,3]", "[1,3,2]")).toBe(false);
-  });
-  
-  it("Two arrays with the same elements in the same order should be equal", function() {
-    expect(areJsonsEqual("[3,1,2]", "[3,1,2]")).toBe(true);
-  });
-
-  it("Two the same flat JSON objects should be equal", function() {
-    expect(areJsonsEqual("{\"key1\": 12, \"key2\":\"some value\"}", "{\"key2\":\"some value\", \"key1\": 12}")).toBe(true);
-  });
-
-  it("Two flat JSON objects with different key should not be equal", function() {
-    expect(areJsonsEqual("{\"key1\": 12}", "{\"key2\": 12}")).toBe(false);
-  });
-
-  it("Two flat JSON objects with different value should not be equal", function() {
-    expect(areJsonsEqual("{\"key1\": 1234}", "{\"key1\": 12}")).toBe(false);
-  });
-});
-
 describe("Get Json diff representation", function() {
 
   it("For two arrays with different value should return correct diff", function() {
@@ -80,7 +45,6 @@ describe("Get Json diff representation", function() {
 
   it("Array of arrays and empty flat array should be different", function() {
     var result = getDiffRepresentation("[]", "[[],[]]");
-    alert(JSON.stringify(result));
     expect(result).toEqual(jasmine.any(Array));
     expect(result[0]["diffType"]).toBe("REMOVE");
     expect(result[0]["value"]).toEqual(jasmine.any(Array));
@@ -99,7 +63,6 @@ describe("Get Json diff representation", function() {
 
   it("Two similar with small difference hidden in depth should be different", function() {
     var result = getDiffRepresentation("{\"a\":{\"b\":{\"c\":\"d\"}}}", "{\"a\":{\"b\":{\"c\":\"e\"}}}");
-    //alert(JSON.stringify(result));
 
     expect(result["a"]["diffType"]).toBe("NONE");
     expect(result["a"]["value"]["b"]["diffType"]).toBe("NONE");
