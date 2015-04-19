@@ -80,7 +80,6 @@ describe("Get Json diff representation", function() {
 
   it("Array of arrays and empty flat array should be different", function() {
     var result = getDiffRepresentation("[]", "[[],[]]");
-    alert(JSON.stringify(result));
     expect(result).toEqual(jasmine.any(Array));
     expect(result[0]["diffType"]).toBe("REMOVE");
     expect(result[0]["value"]).toEqual(jasmine.any(Array));
@@ -99,7 +98,6 @@ describe("Get Json diff representation", function() {
 
   it("Two similar with small difference hidden in depth should be different", function() {
     var result = getDiffRepresentation("{\"a\":{\"b\":{\"c\":\"d\"}}}", "{\"a\":{\"b\":{\"c\":\"e\"}}}");
-    //alert(JSON.stringify(result));
 
     expect(result["a"]["diffType"]).toBe("NONE");
     expect(result["a"]["value"]["b"]["diffType"]).toBe("NONE");
