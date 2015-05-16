@@ -6,9 +6,11 @@ var NONE = "NONE";
 var REMOVE = "REMOVE";
 
 // TYPES
-var SCALAR = "SCALAR";
 var ARRAY = "ARRAY";
 var OBJECT = "OBJECT";
+var SCALAR = "SCALAR";
+
+// OBJECTS
 
 function Diff(key, value, op, valueType) {
   this.key = key;
@@ -16,8 +18,6 @@ function Diff(key, value, op, valueType) {
   this.op = op;
   this.valueType = valueType;
 }
-
-// OBJECTS
 
 function TopDiff(type, diff) {
   this.type = type;
@@ -54,7 +54,6 @@ function getDiffRepresentation(left, right) {
       var leftType = _getType(left[i]);
       var rightType = _getType(right[i]);
       if(leftType === rightType) {
-
         if(leftType === SCALAR) {
           result = result.concat(_getScalarsDiff(null, left[i], null,  right[i]));
         } else if(leftType === OBJECT) {
@@ -62,12 +61,9 @@ function getDiffRepresentation(left, right) {
         } else {
           result.push(new Diff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
         }
-
       } else {
-
         result.push(new Diff(null, left[i], ADD, leftType));
         result.push(new Diff(null, right[i], REMOVE, rightType));
-
       }
     }
 
