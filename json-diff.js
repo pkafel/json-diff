@@ -11,7 +11,6 @@ var OBJECT = "OBJECT";
 var SCALAR = "SCALAR";
 
 // OBJECTS
-
 function Diff(key, value, op, valueType) {
   this.key = key;
   this.value = value;
@@ -25,7 +24,6 @@ function TopDiff(type, diff) {
 }
 
 // MAIN FUNCTION
-
 function getDiffRepresentation(left, right) {
 
   function _getType(v) {
