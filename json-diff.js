@@ -1,16 +1,16 @@
 //// GLOBAL CONSTANTS
 
 // OPS
-var ADD = "ADD";
-var NONE = "NONE";
-var REMOVE = "REMOVE";
+ADD = "ADD";
+NONE = "NONE";
+REMOVE = "REMOVE";
 
 // TYPES
-var ARRAY = "ARRAY";
-var OBJECT = "OBJECT";
-var SCALAR = "SCALAR";
+ARRAY = "ARRAY";
+OBJECT = "OBJECT";
+SCALAR = "SCALAR";
 
-// OBJECTS
+//// OBJECTS
 function Diff(key, value, op, valueType) {
   this.key = key;
   this.value = value;
@@ -23,7 +23,7 @@ function TopDiff(type, diff) {
   this.diff = diff;
 }
 
-// MAIN FUNCTION
+//// MAIN FUNCTION
 function getDiffRepresentation(left, right) {
 
   function _getType(v) {
@@ -32,6 +32,35 @@ function getDiffRepresentation(left, right) {
     if (type === 'object') {
       if (v.constructor === Array) return ARRAY;
       else return OBJECT;
+    }
+  }
+
+  function _getDiffValue(json, op) {
+    var type = _getType(json);
+    if(type === SCALAR) return json;
+    else {
+      function JsonInfo(json) {
+        if(json instanceof Array) {
+          this.numberOfElements = json.length;
+          this.getValueForIndex = function(index) { return json[index]; }
+          this.getKeyIfJson = function(index) { return null; }
+        } else {
+          this.keys = Object.keys(json);
+          this.numberOfElements = this.keys.length;
+          this.getValueForIndex = function(index) { return json[this.keys[index]]; }
+          this.getKeyIfJson = function(index) { return this.keys[index]; }
+        }
+      }
+
+      var result = [];
+      var jsonInfo = new JsonInfo(json);
+      for (var i = 0; i < jsonInfo.numberOfElements; i++) {
+        var o = jsonInfo.getValueForIndex(i);
+        var elementType = _getType(o);
+        var diff = elementType === SCALAR ? o : _getDiffValue(o, op);
+        result.push(new Diff(jsonInfo.getKeyIfJson(i), diff, op, elementType))
+      }
+      return result;
     }
   }
 
@@ -60,15 +89,16 @@ function getDiffRepresentation(left, right) {
           result.push(new Diff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
         }
       } else {
-        result.push(new Diff(null, left[i], ADD, leftType));
-        result.push(new Diff(null, right[i], REMOVE, rightType));
+        result.push(new Diff(null, _getDiffValue(left[i], ADD), ADD, leftType));
+        result.push(new Diff(null, _getDiffValue(right[i], REMOVE), REMOVE, rightType));
       }
     }
 
     var excessArrayInfo = left.length < right.length ? {"array":right, "operation":REMOVE} : {"array":left, "operation":ADD};
     for(var i = minLength;i < excessArrayInfo["array"].length ;i++) {
       var val = excessArrayInfo["array"][i];
-      result.push(new Diff(null, val, excessArrayInfo["operation"], _getType(val)));
+      var op = excessArrayInfo["operation"];
+      result.push(new Diff(null, _getDiffValue(val, op), op, _getType(val)));
     }
 
     return result;
@@ -78,7 +108,7 @@ function getDiffRepresentation(left, right) {
     var result = [];
 
     for(var key in left) {
-      if(!right.hasOwnProperty(key)) result.push(new Diff(key, left[key], ADD, _getType(left[key])));
+      if(!right.hasOwnProperty(key)) result.push(new Diff(key, _getDiffValue(left[key], ADD), ADD, _getType(left[key])));
       else {
         var leftType = _getType(left[key]);
         var rightType = _getType(right[key]);
@@ -91,15 +121,15 @@ function getDiffRepresentation(left, right) {
             result.push(new Diff(key, _getArraysDiff(left[key], right[key]), NONE, ARRAY));
           }
         } else {
-          result.push(new Diff(key, left[key], ADD, leftType));
-          result.push(new Diff(key, right[key], REMOVE, rightType));
+          result.push(new Diff(key, _getDiffValue(left[key], ADD), ADD, leftType));
+          result.push(new Diff(key, _getDiffValue(right[key], REMOVE), REMOVE, rightType));
         }
       }
     }
 
     for(var key in right) {
       if(!left.hasOwnProperty(key)) {
-        result.push(new Diff(key, right[key], REMOVE, _getType(right[key])));
+        result.push(new Diff(key, _getDiffValue(right[key], REMOVE), REMOVE, _getType(right[key])));
       }
     }
 
