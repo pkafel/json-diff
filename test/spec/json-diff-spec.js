@@ -148,4 +148,26 @@ describe("Get Json diff representation", function() {
     expect(result.diff[1].value[1].value[1].valueType).toEqual(SCALAR);
     expect(result.diff[1].value[1].value[1].value).toEqual(2);
   });
+
+  it("Diff from non-existing key in one of jsons should be sorted", function() {
+    var result = getDiffRepresentation("{\"a\":{\"e\":12,\"b\":32,\"d\":11}}",
+        "{}");
+
+    expect(result.type).toEqual(OBJECT);
+    expect(result.diff[0].key).toEqual("a");
+    expect(result.diff[0].op).toEqual(ADD);
+    expect(result.diff[0].valueType).toEqual(OBJECT);
+    expect(result.diff[0].value[0].op).toEqual(ADD);
+    expect(result.diff[0].value[0].valueType).toEqual(SCALAR);
+    expect(result.diff[0].value[0].value).toEqual(32);
+    expect(result.diff[0].value[0].key).toEqual("b");
+    expect(result.diff[0].value[1].op).toEqual(ADD);
+    expect(result.diff[0].value[1].valueType).toEqual(SCALAR);
+    expect(result.diff[0].value[1].value).toEqual(11);
+    expect(result.diff[0].value[1].key).toEqual("d");
+    expect(result.diff[0].value[2].op).toEqual(ADD);
+    expect(result.diff[0].value[2].valueType).toEqual(SCALAR);
+    expect(result.diff[0].value[2].value).toEqual(12);
+    expect(result.diff[0].value[2].key).toEqual("e");
+  });
 });
