@@ -170,4 +170,16 @@ describe("Get Json diff representation", function() {
     expect(result.diff[0].value[2].value).toEqual(12);
     expect(result.diff[0].value[2].key).toEqual("e");
   });
+
+  it("Diff should be sorted by key and operation", function() {
+      var result = getDiffRepresentation("{\"a\":1}", "{\"a\":\"1\"}");
+
+      expect(result.type).toEqual(OBJECT);
+      expect(result.diff[0].key).toEqual("a");
+      expect(result.diff[0].op).toEqual(ADD);
+      expect(result.diff[0].valueType).toEqual(SCALAR);
+      expect(result.diff[1].key).toEqual("a");
+      expect(result.diff[1].op).toEqual(REMOVE);
+      expect(result.diff[1].valueType).toEqual(SCALAR);
+  })
 });
