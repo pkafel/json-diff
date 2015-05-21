@@ -4,7 +4,7 @@ Pure Javascript library for comparing two Jsons. As an output returns well defin
 ## How to run unit tests
 It is super simple ! Just open `test/SpecRunner.html.jst` in your browser !
 
-## How does output look like
+## Output structure
 The output of `getDiffRepresentation` is a tree. The root of the tree is represented in the following way:
 ```
 {
@@ -22,3 +22,6 @@ Nodes representation:
   "op": < "ADD" | "REMOVE" | "NONE">
 }
 ```
+
+## Examples
+If you are interested in some examples you can find them [here](https://github.com/pkafel/json-diff/wiki/Examples) !
