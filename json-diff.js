@@ -72,7 +72,7 @@ function getDiffRepresentation(left, right) {
         result.push(new Diff(key, _getInDepthArrayDiff(value, op), op, ARRAY));
       }
     }
-    result.sort(function(a,b) {return (a.key > b.key) ? 1 : ((b.key > a.key) ? -1 : 0);} );
+    result.sort(_sortByKeyAndOp);
     return result;
   }
 
@@ -145,8 +145,13 @@ function getDiffRepresentation(left, right) {
       }
     }
 
-    result.sort(function(a,b) {return (a.key > b.key) ? 1 : ((b.key > a.key) ? -1 : 0);} );
+    result.sort(_sortByKeyAndOp);
     return result;
+  }
+
+  function _sortByKeyAndOp(a, b){
+    if (a.key === b.key) return (a.op === ADD) ? -1 : (a.op === REMOVE) ? 1 : 0;
+    return a.key > b.key ? 1 : (b.key > a.key) ? -1 : 0;
   }
 
   var leftJson = JSON.parse(left);
