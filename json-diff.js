@@ -19,7 +19,7 @@ function Diff(key, value, op, valueType) {
 }
 
 function TopDiff(type, diff) {
-  this.type = type;
+  this.topType = type;
   this.diff = diff;
 }
 
@@ -159,5 +159,9 @@ function getDiffRepresentation(left, right) {
 
   if(leftJson instanceof Array && rightJson instanceof Array) return new TopDiff(ARRAY, _getArraysDiff(leftJson, rightJson));
   else if(!(leftJson instanceof Array) && !(rightJson instanceof Array)) return new TopDiff(OBJECT, _getJsonsDiff(leftJson, rightJson));
-  else throw "Nothing in common !";
+  else {
+    var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, _getType(leftJson));
+    var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, _getType(rightJson));
+    return new TopDiff(NONE, [leftOutput, rightOutput]);
+  }
 }
