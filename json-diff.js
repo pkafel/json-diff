@@ -23,6 +23,11 @@ function TopDiff(type, diff) {
   this.diff = diff;
 }
 
+function ValidationException(leftError, rightError) {
+  this.leftError = leftError;
+  this.rightError = rightError;
+}
+
 //// MAIN FUNCTION
 function getDiffRepresentation(left, right) {
 
@@ -154,14 +159,32 @@ function getDiffRepresentation(left, right) {
     return a.key > b.key ? 1 : (b.key > a.key) ? -1 : 0;
   }
 
-  var leftJson = JSON.parse(left);
-  var rightJson = JSON.parse(right);
+  function _parseJson(input) {
+    var parsedJson = null;
+    try {
+      parsedJson = JSON.parse(input);
+    } catch(err) {
+      return {"json": null, "exception": "Input is not a valid JSON"};
+    }
 
-  if(leftJson instanceof Array && rightJson instanceof Array) return new TopDiff(ARRAY, _getArraysDiff(leftJson, rightJson));
-  else if(!(leftJson instanceof Array) && !(rightJson instanceof Array)) return new TopDiff(OBJECT, _getJsonsDiff(leftJson, rightJson));
+    var jsonType = _getType(parsedJson);
+    return jsonType === ARRAY || jsonType === OBJECT ?
+      {"json": parsedJson, "exception": null} : {"json": parsedJson, "exception": "Input is not a valid JSON"};
+  }
+
+  var leftParseResult = _parseJson(left);
+  var rightParseResult = _parseJson(right);
+
+  if(leftParseResult["exception"] !== null || rightParseResult["exception"] !== null) throw new ValidationException(leftErrors, rightErrors);
+
+  var leftJson = leftParseResult["json"]; var rightJson = rightParseResult["json"];
+  var leftJsonType = _getType(leftParseResult["json"]); var rightJsonType = _getType(rightParseResult["json"]);
+
+  if(leftJsonType === ARRAY && rightJsonType === ARRAY) return new TopDiff(ARRAY, _getArraysDiff(leftJson, rightJson));
+  else if(leftJsonType === OBJECT && rightJsonType === OBJECT) return new TopDiff(OBJECT, _getJsonsDiff(leftJson, rightJson));
   else {
-    var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, _getType(leftJson));
-    var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, _getType(rightJson));
+    var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, leftJsonType);
+    var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, rightJsonType);
     return new TopDiff(NONE, [leftOutput, rightOutput]);
   }
 }

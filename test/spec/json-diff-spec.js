@@ -186,7 +186,7 @@ describe("Get Json diff representation", function() {
   it("Diff should be sorted by key and operation", function() {
       var result = getDiffRepresentation("{\"a\":1}", "{\"a\":\"1\"}");
 
-      expect(result.type).toEqual(OBJECT);
+      expect(result.topType).toEqual(OBJECT);
       expect(result.diff[0].key).toEqual("a");
       expect(result.diff[0].op).toEqual(ADD);
       expect(result.diff[0].valueType).toEqual(SCALAR);
