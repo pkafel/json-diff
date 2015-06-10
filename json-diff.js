@@ -175,7 +175,8 @@ function getDiffRepresentation(left, right) {
   var leftParseResult = _parseJson(left);
   var rightParseResult = _parseJson(right);
 
-  if(leftParseResult["exception"] !== null || rightParseResult["exception"] !== null) throw new ValidationException(leftErrors, rightErrors);
+  if(leftParseResult["exception"] !== null || rightParseResult["exception"] !== null)
+    throw new ValidationException(leftParseResult["exception"], rightParseResult["exception"]);
 
   var leftJson = leftParseResult["json"]; var rightJson = rightParseResult["json"];
   var leftJsonType = _getType(leftParseResult["json"]); var rightJsonType = _getType(rightParseResult["json"]);
