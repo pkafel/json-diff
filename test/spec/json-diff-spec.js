@@ -222,4 +222,28 @@ describe("Get Json diff representation", function() {
     };
     expect(call).toThrow(new ValidationException("Input is not a valid JSON", null));
   });
+
+  it("Diff should throw exception with correct error message when one of jsons is null", function() {
+    var call = function() {
+      getDiffRepresentation("{}", "null");
+    };
+    expect(call).toThrow(new ValidationException(null, "Input is not a valid JSON"));
+  });
+
+  it("Diff should handle null values", function() {
+    var result = getDiffRepresentation("{\"a\":null,\"b\":[null]}", "{\"b\":[null],\"a\":null}");
+
+    expect(result.topType).toEqual(OBJECT);
+    expect(result.diff[0].key).toEqual("a");
+    expect(result.diff[0].op).toEqual(NONE);
+    expect(result.diff[0].valueType).toEqual(NULL);
+    expect(result.diff[0].value).toEqual(null);
+    expect(result.diff[1].key).toEqual("b");
+    expect(result.diff[1].op).toEqual(NONE);
+    expect(result.diff[1].valueType).toEqual(ARRAY);
+    expect(result.diff[1].value[0].key).toEqual(null);
+    expect(result.diff[1].value[0].value).toEqual(null);
+    expect(result.diff[1].value[0].valueType).toEqual(NULL);
+    expect(result.diff[1].value[0].op).toEqual(NONE);
+  });
 });

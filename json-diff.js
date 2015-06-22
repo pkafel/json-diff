@@ -7,6 +7,7 @@ REMOVE = "REMOVE";
 
 // TYPES
 ARRAY = "ARRAY";
+NULL = "NULL";
 OBJECT = "OBJECT";
 SCALAR = "SCALAR";
 
@@ -32,6 +33,7 @@ function ValidationException(leftError, rightError) {
 function getDiffRepresentation(left, right) {
 
   function _getType(v) {
+    if(v === null) return NULL;
     var type = typeof(v);
     if (type === 'number' || type === 'string' || type === 'boolean') return SCALAR;
     if (type === 'object') {
@@ -102,8 +104,10 @@ function getDiffRepresentation(left, right) {
           result = result.concat(_getScalarsDiff(null, left[i], null,  right[i]));
         } else if(leftType === OBJECT) {
           result.push(new Diff(null, _getJsonsDiff(left[i], right[i]), NONE, OBJECT));
-        } else {
+        } else if(leftType === ARRAY){
           result.push(new Diff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
+        } else {
+          result.push(new Diff(null, null, NONE, NULL));
         }
       } else {
         result.push(new Diff(null, _getInDepthDiff(left[i], ADD), ADD, leftType));
@@ -134,8 +138,10 @@ function getDiffRepresentation(left, right) {
             result = result.concat(_getScalarsDiff(key, left[key], key,  right[key]));
           } else if (leftType === OBJECT) {
             result.push(new Diff(key, _getJsonsDiff(left[key], right[key]), NONE, OBJECT));
-          } else {
+          } else if(leftType == ARRAY){
             result.push(new Diff(key, _getArraysDiff(left[key], right[key]), NONE, ARRAY));
+          } else {
+            result.push(new Diff(key, null, NONE, NULL));
           }
         } else {
           result.push(new Diff(key, _getInDepthDiff(left[key], ADD), ADD, leftType));
