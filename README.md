@@ -18,7 +18,7 @@ Nodes representation:
 {
   "key": ...,
   "value": < scalar value | [ nodes ] >,
-  "valueType": < "SCALAR" | "OBJECT" | "ARRAY">,
+  "valueType": < "SCALAR" | "OBJECT" | "ARRAY" | "NULL">,
   "op": < "ADD" | "REMOVE" | "NONE">
 }
 ```
