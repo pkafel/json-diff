@@ -8,7 +8,7 @@ It is super simple ! Just open `test/SpecRunner.html.jst` in your browser !
 The output of `getDiffRepresentation` is a tree. The root of the tree is represented in the following way:
 ```
 {
-  "type": < "OBJECT" | "ARRAY" >,
+  "type": < "OBJECT" | "ARRAY" | "NULL" >,
   "diff": [ nodes ]
 }
 ```
@@ -18,8 +18,8 @@ Nodes representation:
 {
   "key": ...,
   "value": < scalar value | [ nodes ] >,
-  "valueType": < "SCALAR" | "OBJECT" | "ARRAY" | "NULL">,
-  "op": < "ADD" | "REMOVE" | "NONE">
+  "valueType": < "SCALAR" | "OBJECT" | "ARRAY" | "NULL" >,
+  "op": < "ADD" | "REMOVE" | "NONE" >
 }
 ```
 
