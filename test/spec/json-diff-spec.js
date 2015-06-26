@@ -88,7 +88,7 @@ describe("Get Json diff representation", function() {
 
   it("Array and JSON object have nothing in common so returned diff should represent that", function() {
     var result = getDiffRepresentation("[1,2]", "{\"a\": \"hello\"}");
-    expect(result.topType).toEqual(NONE);
+    expect(result.topType).toEqual(NULL);
     expect(result.diff[0].op).toEqual(ADD);
     expect(result.diff[0].valueType).toEqual(ARRAY);
     expect(result.diff[0].value[0].op).toEqual(ADD);

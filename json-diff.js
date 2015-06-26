@@ -192,6 +192,6 @@ function getDiffRepresentation(left, right) {
   else {
     var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, leftJsonType);
     var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, rightJsonType);
-    return new TopDiff(NONE, [leftOutput, rightOutput]);
+    return new TopDiff(NULL, [leftOutput, rightOutput]);
   }
 }
