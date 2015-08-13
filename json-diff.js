@@ -29,8 +29,36 @@ function ValidationException(leftError, rightError) {
   this.rightError = rightError;
 }
 
+function ComparingValueStrategy () {
+  this.getScalarsDiff = function(leftKey, leftValue, rightKey, rightValue) {
+    var result = [];
+    if(leftValue !== rightValue) {
+      result.push(new Diff(leftKey, leftValue, ADD, SCALAR), new Diff(rightKey, rightValue, REMOVE, SCALAR));
+    } else {
+      result.push(new Diff(leftKey, leftValue, NONE, SCALAR));
+    }
+    return result;
+  }
+}
+
+function ComparingKeyStrategy () {
+  this.getScalarsDiff = function(leftKey, leftValue, rightKey, rightValue) {
+    var result = [];
+    if(leftKey !== null) {
+      if(leftKey !== rightKey) {
+        result.push(new Diff(leftKey, "...", ADD, SCALAR), new Diff(rightKey, "...", REMOVE, SCALAR));
+      } else {
+        result.push(new Diff(leftKey, "...", NONE, SCALAR));
+      }
+    } else {
+      result.push(new Diff(null, "...", NONE, SCALAR));
+    }
+    return result;
+  }
+}
+
 //// MAIN FUNCTION
-function getDiffRepresentation(left, right) {
+function getDiffRepresentation(left, right, strategy) {
 
   function _getType(v) {
     if(v === null) return NULL;
@@ -83,16 +111,6 @@ function getDiffRepresentation(left, right) {
     return result;
   }
 
-  function _getScalarsDiff(leftKey, leftValue, rightKey, rightValue) {
-    var result = [];
-    if(leftValue !== rightValue) {
-      result.push(new Diff(leftKey, leftValue, ADD, SCALAR), new Diff(rightKey, rightValue, REMOVE, SCALAR));
-    } else {
-      result.push(new Diff(leftKey, leftValue, NONE, SCALAR));
-    }
-    return result;
-  }
-
   function _getArraysDiff(left, right) {
     var result = [];
     var minLength = Math.min(left.length, right.length);
@@ -101,7 +119,7 @@ function getDiffRepresentation(left, right) {
       var rightType = _getType(right[i]);
       if(leftType === rightType) {
         if(leftType === SCALAR) {
-          result = result.concat(_getScalarsDiff(null, left[i], null,  right[i]));
+          result = result.concat(strategy.getScalarsDiff(null, left[i], null,  right[i]));
         } else if(leftType === OBJECT) {
           result.push(new Diff(null, _getJsonsDiff(left[i], right[i]), NONE, OBJECT));
         } else if(leftType === ARRAY){
@@ -135,7 +153,7 @@ function getDiffRepresentation(left, right) {
         var rightType = _getType(right[key]);
         if(leftType === rightType) {
           if (leftType === SCALAR) {
-            result = result.concat(_getScalarsDiff(key, left[key], key,  right[key]));
+            result = result.concat(strategy.getScalarsDiff(key, left[key], key,  right[key]));
           } else if (leftType === OBJECT) {
             result.push(new Diff(key, _getJsonsDiff(left[key], right[key]), NONE, OBJECT));
           } else if(leftType == ARRAY){
@@ -177,6 +195,8 @@ function getDiffRepresentation(left, right) {
     return jsonType === ARRAY || jsonType === OBJECT ?
       {"json": parsedJson, "exception": null} : {"json": parsedJson, "exception": "Input is not a valid JSON"};
   }
+
+  strategy = typeof strategy !== 'undefined' ? strategy : new ComparingValueStrategy();
 
   var leftParseResult = _parseJson(left);
   var rightParseResult = _parseJson(right);

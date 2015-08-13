@@ -1,7 +1,9 @@
-describe("Get Json diff representation", function() {
+describe("Get Json diff representation when comparing by values", function() {
+
+  var strategy = new ComparingValueStrategy();
 
   it("For two arrays with different value should return correct diff", function() {
-    var result = getDiffRepresentation("[1,2]", "[4,5]");
+    var result = getDiffRepresentation("[1,2]", "[4,5]", strategy);
     expect(result.topType).toEqual(ARRAY);
     expect(result.diff[0].value).toEqual(1);
     expect(result.diff[0].op).toEqual(ADD);
@@ -18,7 +20,7 @@ describe("Get Json diff representation", function() {
   });
 
   it("For two arrays with the same values should return correct diff", function() {
-    var result = getDiffRepresentation("[1,2]", "[1,2]");
+    var result = getDiffRepresentation("[1,2]", "[1,2]", strategy);
     expect(result.topType).toEqual(ARRAY);
     expect(result.diff[0].value).toEqual(1);
     expect(result.diff[0].op).toEqual(NONE);
@@ -29,7 +31,7 @@ describe("Get Json diff representation", function() {
   });
 
   it("For two the same flat JSONs should return object without any differences", function() {
-    var result = getDiffRepresentation("{\"key1\": 123, \"key2\": \"some value\"}", "{\"key2\": \"some value\", \"key1\": 123}");
+    var result = getDiffRepresentation("{\"key1\": 123, \"key2\": \"some value\"}", "{\"key2\": \"some value\", \"key1\": 123}", strategy);
     expect(result.topType).toEqual(OBJECT);
     expect(result.diff[0].key).toEqual("key1");
     expect(result.diff[0].value).toEqual(123);
@@ -43,7 +45,8 @@ describe("Get Json diff representation", function() {
 
   it("For two arrays with flat JSONs on it should return correct diff", function() {
     var result = getDiffRepresentation("[1,2,{\"key1\": 234, \"key2\": \"val\"}]",
-                                       "[3,2,{\"key2\": 234, \"key3\": \"val\"}]");
+                                       "[3,2,{\"key2\": 234, \"key3\": \"val\"}]",
+                                       strategy);
     expect(result.topType).toEqual(ARRAY);
     expect(result.diff[0].value).toEqual(1);
     expect(result.diff[0].op).toEqual(ADD);
@@ -76,7 +79,7 @@ describe("Get Json diff representation", function() {
   });
 
   it("Array of arrays and empty flat array should be different", function() {
-    var result = getDiffRepresentation("[]", "[[],[]]");
+    var result = getDiffRepresentation("[]", "[[],[]]", strategy);
     expect(result.topType).toEqual(ARRAY);
     expect(result.diff[0].value).toEqual([]);
     expect(result.diff[0].op).toEqual(REMOVE);
@@ -87,7 +90,7 @@ describe("Get Json diff representation", function() {
   });
 
   it("Array and JSON object have nothing in common so returned diff should represent that", function() {
-    var result = getDiffRepresentation("[1,2]", "{\"a\": \"hello\"}");
+    var result = getDiffRepresentation("[1,2]", "{\"a\": \"hello\"}", strategy);
     expect(result.topType).toEqual(NULL);
     expect(result.diff[0].op).toEqual(ADD);
     expect(result.diff[0].valueType).toEqual(ARRAY);
@@ -106,7 +109,7 @@ describe("Get Json diff representation", function() {
   });
 
   it("Two similar with small difference hidden in depth should be different", function() {
-    var result = getDiffRepresentation("{\"a\":{\"b\":{\"c\":\"d\"}}}", "{\"a\":{\"b\":{\"c\":\"e\"}}}");
+    var result = getDiffRepresentation("{\"a\":{\"b\":{\"c\":\"d\"}}}", "{\"a\":{\"b\":{\"c\":\"e\"}}}", strategy);
 
     expect(result.topType).toEqual(OBJECT);
     expect(result.diff[0].key).toEqual("a");
@@ -127,7 +130,7 @@ describe("Get Json diff representation", function() {
 
   it("Should return always well structured output", function() {
     var result = getDiffRepresentation("{\"a\":[1, 2, 3]}",
-        "{\"b\":{\"c\":12,\"d\":[1, 2]}}");
+        "{\"b\":{\"c\":12,\"d\":[1, 2]}}", strategy);
 
     expect(result.topType).toEqual(OBJECT);
     expect(result.diff[0].key).toEqual("a");
@@ -163,7 +166,7 @@ describe("Get Json diff representation", function() {
 
   it("Diff from non-existing key in one of jsons should be sorted", function() {
     var result = getDiffRepresentation("{\"a\":{\"e\":12,\"b\":32,\"d\":11}}",
-        "{}");
+        "{}", strategy);
 
     expect(result.topType).toEqual(OBJECT);
     expect(result.diff[0].key).toEqual("a");
@@ -184,7 +187,7 @@ describe("Get Json diff representation", function() {
   });
 
   it("Diff should be sorted by key and operation", function() {
-      var result = getDiffRepresentation("{\"a\":1}", "{\"a\":\"1\"}");
+      var result = getDiffRepresentation("{\"a\":1}", "{\"a\":\"1\"}", strategy);
 
       expect(result.topType).toEqual(OBJECT);
       expect(result.diff[0].key).toEqual("a");
@@ -197,41 +200,41 @@ describe("Get Json diff representation", function() {
 
   it("Diff should throw exception with correct error message when left json is invalid", function() {
     var call = function() {
-      getDiffRepresentation("Oh, how I wish you were here now...", "{\"a\":\"1\"}");
+      getDiffRepresentation("Oh, how I wish you were here now...", "{\"a\":\"1\"}", strategy);
     };
     expect(call).toThrow(new ValidationException("Input is not a valid JSON", null));
   });
 
   it("Diff should throw exception with correct error message when right json is invalid", function() {
     var call = function() {
-      getDiffRepresentation("{\"a\":\"1\"}", "... we were just two lost souls");
+      getDiffRepresentation("{\"a\":\"1\"}", "... we were just two lost souls", strategy);
     };
     expect(call).toThrow(new ValidationException(null, "Input is not a valid JSON"));
   });
 
   it("Diff should throw exception with correct error message when left and right json is invalid", function() {
     var call = function() {
-      getDiffRepresentation("... swimming in a fish bowl...", "... year after year.");
+      getDiffRepresentation("... swimming in a fish bowl...", "... year after year.", strategy);
     };
     expect(call).toThrow(new ValidationException("Input is not a valid JSON", "Input is not a valid JSON"));
   });
 
   it("Diff should throw exception with correct error message when one of jsons is scalar", function() {
     var call = function() {
-      getDiffRepresentation("11", "{}");
+      getDiffRepresentation("11", "{}", strategy);
     };
     expect(call).toThrow(new ValidationException("Input is not a valid JSON", null));
   });
 
   it("Diff should throw exception with correct error message when one of jsons is null", function() {
     var call = function() {
-      getDiffRepresentation("{}", "null");
+      getDiffRepresentation("{}", "null", strategy);
     };
     expect(call).toThrow(new ValidationException(null, "Input is not a valid JSON"));
   });
 
   it("Diff should handle null values", function() {
-    var result = getDiffRepresentation("{\"a\":null,\"b\":[null]}", "{\"b\":[null],\"a\":null}");
+    var result = getDiffRepresentation("{\"a\":null,\"b\":[null]}", "{\"b\":[null],\"a\":null}", strategy);
 
     expect(result.topType).toEqual(OBJECT);
     expect(result.diff[0].key).toEqual("a");
@@ -246,4 +249,7 @@ describe("Get Json diff representation", function() {
     expect(result.diff[1].value[0].valueType).toEqual(NULL);
     expect(result.diff[1].value[0].op).toEqual(NONE);
   });
+});
+
+describe("Get Json diff representation when comparing by values", function() {
 });
