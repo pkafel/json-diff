@@ -38,6 +38,10 @@ function ComparingValueStrategy () {
       result.push(new Diff(leftKey, leftValue, NONE, SCALAR));
     }
     return result;
+  };
+
+  this.createDiff = function(key, value, op, valueType) {
+    return new Diff(key, value, op, valueType);
   }
 }
 
@@ -54,6 +58,11 @@ function ComparingKeyStrategy () {
       result.push(new Diff(null, "...", NONE, SCALAR));
     }
     return result;
+  };
+
+  this.createDiff = function(key, value, op, valueType) {
+    if(valueType === SCALAR) return new Diff(key, "...", op, valueType);
+    return new Diff(key, value, op, valueType);
   }
 }
 
@@ -83,11 +92,11 @@ function getDiffRepresentation(left, right, strategy) {
       var value = json[i];
       var valueType = _getType(value);
       if (valueType === SCALAR) {
-        result.push(new Diff(null, value, op, SCALAR));
+        result.push(strategy.createDiff(null, value, op, SCALAR));
       } else if (valueType === OBJECT) {
-        result.push(new Diff(null, _getInDepthJsonDiff(value, op), op, OBJECT));
+        result.push(strategy.createDiff(null, _getInDepthJsonDiff(value, op), op, OBJECT));
       } else {
-        result.push(new Diff(null, _getInDepthArrayDiff(value, op), op, ARRAY));
+        result.push(strategy.createDiff(null, _getInDepthArrayDiff(value, op), op, ARRAY));
       }
     }
     return result;
@@ -100,11 +109,11 @@ function getDiffRepresentation(left, right, strategy) {
       var value = json[key];
       var valueType = _getType(value);
       if (valueType === SCALAR) {
-        result.push(new Diff(key, value, op, SCALAR));
+        result.push(strategy.createDiff(key, value, op, SCALAR));
       } else if (valueType === OBJECT) {
-        result.push(new Diff(key, _getInDepthJsonDiff(value, op), op, OBJECT));
+        result.push(strategy.createDiff(key, _getInDepthJsonDiff(value, op), op, OBJECT));
       } else {
-        result.push(new Diff(key, _getInDepthArrayDiff(value, op), op, ARRAY));
+        result.push(strategy.createDiff(key, _getInDepthArrayDiff(value, op), op, ARRAY));
       }
     }
     result.sort(_sortByKeyAndOp);
@@ -121,15 +130,15 @@ function getDiffRepresentation(left, right, strategy) {
         if(leftType === SCALAR) {
           result = result.concat(strategy.getScalarsDiff(null, left[i], null,  right[i]));
         } else if(leftType === OBJECT) {
-          result.push(new Diff(null, _getJsonsDiff(left[i], right[i]), NONE, OBJECT));
+          result.push(strategy.createDiff(null, _getJsonsDiff(left[i], right[i]), NONE, OBJECT));
         } else if(leftType === ARRAY){
-          result.push(new Diff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
+          result.push(strategy.createDiff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
         } else {
-          result.push(new Diff(null, null, NONE, NULL));
+          result.push(strategy.createDiff(null, null, NONE, NULL));
         }
       } else {
-        result.push(new Diff(null, _getInDepthDiff(left[i], ADD), ADD, leftType));
-        result.push(new Diff(null, _getInDepthDiff(right[i], REMOVE), REMOVE, rightType));
+        result.push(strategy.createDiff(null, _getInDepthDiff(left[i], ADD), ADD, leftType));
+        result.push(strategy.createDiff(null, _getInDepthDiff(right[i], REMOVE), REMOVE, rightType));
       }
     }
 
@@ -137,7 +146,7 @@ function getDiffRepresentation(left, right, strategy) {
     for(var i = minLength;i < excessArrayInfo["array"].length ;i++) {
       var val = excessArrayInfo["array"][i];
       var op = excessArrayInfo["operation"];
-      result.push(new Diff(null, _getInDepthDiff(val, op), op, _getType(val)));
+      result.push(strategy.createDiff(null, _getInDepthDiff(val, op), op, _getType(val)));
     }
 
     return result;
@@ -147,7 +156,7 @@ function getDiffRepresentation(left, right, strategy) {
     var result = [];
 
     for(var key in left) {
-      if(!right.hasOwnProperty(key)) result.push(new Diff(key, _getInDepthDiff(left[key], ADD), ADD, _getType(left[key])));
+      if(!right.hasOwnProperty(key)) result.push(strategy.createDiff(key, _getInDepthDiff(left[key], ADD), ADD, _getType(left[key])));
       else {
         var leftType = _getType(left[key]);
         var rightType = _getType(right[key]);
@@ -155,22 +164,22 @@ function getDiffRepresentation(left, right, strategy) {
           if (leftType === SCALAR) {
             result = result.concat(strategy.getScalarsDiff(key, left[key], key,  right[key]));
           } else if (leftType === OBJECT) {
-            result.push(new Diff(key, _getJsonsDiff(left[key], right[key]), NONE, OBJECT));
+            result.push(strategy.createDiff(key, _getJsonsDiff(left[key], right[key]), NONE, OBJECT));
           } else if(leftType == ARRAY){
-            result.push(new Diff(key, _getArraysDiff(left[key], right[key]), NONE, ARRAY));
+            result.push(strategy.createDiff(key, _getArraysDiff(left[key], right[key]), NONE, ARRAY));
           } else {
-            result.push(new Diff(key, null, NONE, NULL));
+            result.push(strategy.createDiff(key, null, NONE, NULL));
           }
         } else {
-          result.push(new Diff(key, _getInDepthDiff(left[key], ADD), ADD, leftType));
-          result.push(new Diff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, rightType));
+          result.push(strategy.createDiff(key, _getInDepthDiff(left[key], ADD), ADD, leftType));
+          result.push(strategy.createDiff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, rightType));
         }
       }
     }
 
     for(var key in right) {
       if(!left.hasOwnProperty(key)) {
-        result.push(new Diff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, _getType(right[key])));
+        result.push(strategy.createDiff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, _getType(right[key])));
       }
     }
 

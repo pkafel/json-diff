@@ -251,5 +251,72 @@ describe("Get Json diff representation when comparing by values", function() {
   });
 });
 
-describe("Get Json diff representation when comparing by values", function() {
+describe("Get Json diff representation when comparing by keys", function() {
+
+  var strategy = new ComparingKeyStrategy();
+
+  it("For two arrays with different value should return correct diff", function() {
+    var result = getDiffRepresentation("[1,2]", "[4,5]", strategy);
+    expect(result.topType).toEqual(ARRAY);
+    expect(result.diff.length).toEqual(2);
+    expect(result.diff[0].value).toEqual("...");
+    expect(result.diff[0].op).toEqual(NONE);
+    expect(result.diff[0].valueType).toEqual(SCALAR);
+    expect(result.diff[1].value).toEqual("...");
+    expect(result.diff[1].op).toEqual(NONE);
+    expect(result.diff[1].valueType).toEqual(SCALAR);
+  });
+
+  it("For two arrays with the same values should return correct diff", function() {
+    var result = getDiffRepresentation("[1,2]", "[1,2]", strategy);
+    expect(result.topType).toEqual(ARRAY);
+    expect(result.diff.length).toEqual(2);
+    expect(result.diff[0].value).toEqual("...");
+    expect(result.diff[0].op).toEqual(NONE);
+    expect(result.diff[0].valueType).toEqual(SCALAR);
+    expect(result.diff[1].value).toEqual("...");
+    expect(result.diff[1].op).toEqual(NONE);
+    expect(result.diff[1].valueType).toEqual(SCALAR);
+  });
+
+  it("For two the same flat JSONs should return object without any differences", function() {
+    var result = getDiffRepresentation("{\"key1\": 123, \"key2\": \"some value\"}", "{\"key2\": \"some value\", \"key1\": 123}", strategy);
+    expect(result.topType).toEqual(OBJECT);
+    expect(result.diff[0].key).toEqual("key1");
+    expect(result.diff[0].value).toEqual("...");
+    expect(result.diff[0].op).toEqual(NONE);
+    expect(result.diff[0].valueType).toEqual(SCALAR);
+    expect(result.diff[1].key).toEqual("key2");
+    expect(result.diff[1].value).toEqual("...");
+    expect(result.diff[1].op).toEqual(NONE);
+    expect(result.diff[1].valueType).toEqual(SCALAR);
+  });
+
+  it("For two arrays with flat JSONs on it should return correct diff", function() {
+    var result = getDiffRepresentation("[1,2,{\"key1\": 234, \"key2\": \"val\"}]",
+                                       "[3,2,{\"key2\": 234, \"key3\": \"val\"}]",
+                                       strategy);
+    expect(result.topType).toEqual(ARRAY);
+    expect(result.diff[0].value).toEqual("...");
+    expect(result.diff[0].op).toEqual(NONE);
+    expect(result.diff[0].valueType).toEqual(SCALAR);
+    expect(result.diff[1].value).toEqual("...");
+    expect(result.diff[1].op).toEqual(NONE);
+    expect(result.diff[1].valueType).toEqual(SCALAR);
+
+    expect(result.diff[2].op).toEqual(NONE);
+    expect(result.diff[2].valueType).toEqual(OBJECT);
+    expect(result.diff[2].value[0].key).toEqual("key1");
+    expect(result.diff[2].value[0].value).toEqual("...");
+    expect(result.diff[2].value[0].op).toEqual(ADD);
+    expect(result.diff[2].value[0].valueType).toEqual(SCALAR);
+    expect(result.diff[2].value[1].key).toEqual("key2");
+    expect(result.diff[2].value[1].value).toEqual("...");
+    expect(result.diff[2].value[1].op).toEqual(NONE);
+    expect(result.diff[2].value[1].valueType).toEqual(SCALAR);
+    expect(result.diff[2].value[2].key).toEqual("key3");
+    expect(result.diff[2].value[2].value).toEqual("...");
+    expect(result.diff[2].value[2].op).toEqual(REMOVE);
+    expect(result.diff[2].value[2].valueType).toEqual(SCALAR);
+  });
 });
