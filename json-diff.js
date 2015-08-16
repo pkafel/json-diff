@@ -11,6 +11,9 @@ NULL = "NULL";
 OBJECT = "OBJECT";
 SCALAR = "SCALAR";
 
+// OTHER
+NON_RELEVANT_VALUE = "..."
+
 //// OBJECTS
 function Diff(key, value, op, valueType) {
   this.key = key;
@@ -29,8 +32,47 @@ function ValidationException(leftError, rightError) {
   this.rightError = rightError;
 }
 
+function ComparingValueStrategy () {
+  this.getScalarsDiff = function(leftKey, leftValue, rightKey, rightValue) {
+    var result = [];
+    if(leftValue !== rightValue) {
+      result.push(new Diff(leftKey, leftValue, ADD, SCALAR), new Diff(rightKey, rightValue, REMOVE, SCALAR));
+    } else {
+      result.push(new Diff(leftKey, leftValue, NONE, SCALAR));
+    }
+    return result;
+  };
+
+  this.createDiff = function(key, value, op, valueType) {
+    return new Diff(key, value, op, valueType);
+  }
+}
+
+function ComparingKeyStrategy () {
+  this.getScalarsDiff = function(leftKey, leftValue, rightKey, rightValue) {
+    var result = [];
+    if(leftKey !== null) {
+      if(leftKey !== rightKey) {
+        result.push(new Diff(leftKey, NON_RELEVANT_VALUE, ADD, SCALAR), new Diff(rightKey, NON_RELEVANT_VALUE, REMOVE, SCALAR));
+      } else {
+        result.push(new Diff(leftKey, NON_RELEVANT_VALUE, NONE, SCALAR));
+      }
+    } else {
+      result.push(new Diff(null, NON_RELEVANT_VALUE, NONE, SCALAR));
+    }
+    return result;
+  };
+
+  this.createDiff = function(key, value, op, valueType) {
+    if(valueType === SCALAR) return new Diff(key, NON_RELEVANT_VALUE, op, valueType);
+    if(key === null && op !== NONE) return new Diff(key, NON_RELEVANT_VALUE, NONE, SCALAR);
+    if(key !== null && op !== NONE) return new Diff(key, NON_RELEVANT_VALUE, op, SCALAR);
+    return new Diff(key, value, op, valueType);
+  }
+}
+
 //// MAIN FUNCTION
-function getDiffRepresentation(left, right) {
+function getDiffRepresentation(left, right, strategy) {
 
   function _getType(v) {
     if(v === null) return NULL;
@@ -55,11 +97,11 @@ function getDiffRepresentation(left, right) {
       var value = json[i];
       var valueType = _getType(value);
       if (valueType === SCALAR) {
-        result.push(new Diff(null, value, op, SCALAR));
+        result.push(strategy.createDiff(null, value, op, SCALAR));
       } else if (valueType === OBJECT) {
-        result.push(new Diff(null, _getInDepthJsonDiff(value, op), op, OBJECT));
+        result.push(strategy.createDiff(null, _getInDepthJsonDiff(value, op), op, OBJECT));
       } else {
-        result.push(new Diff(null, _getInDepthArrayDiff(value, op), op, ARRAY));
+        result.push(strategy.createDiff(null, _getInDepthArrayDiff(value, op), op, ARRAY));
       }
     }
     return result;
@@ -72,24 +114,14 @@ function getDiffRepresentation(left, right) {
       var value = json[key];
       var valueType = _getType(value);
       if (valueType === SCALAR) {
-        result.push(new Diff(key, value, op, SCALAR));
+        result.push(strategy.createDiff(key, value, op, SCALAR));
       } else if (valueType === OBJECT) {
-        result.push(new Diff(key, _getInDepthJsonDiff(value, op), op, OBJECT));
+        result.push(strategy.createDiff(key, _getInDepthJsonDiff(value, op), op, OBJECT));
       } else {
-        result.push(new Diff(key, _getInDepthArrayDiff(value, op), op, ARRAY));
+        result.push(strategy.createDiff(key, _getInDepthArrayDiff(value, op), op, ARRAY));
       }
     }
     result.sort(_sortByKeyAndOp);
-    return result;
-  }
-
-  function _getScalarsDiff(leftKey, leftValue, rightKey, rightValue) {
-    var result = [];
-    if(leftValue !== rightValue) {
-      result.push(new Diff(leftKey, leftValue, ADD, SCALAR), new Diff(rightKey, rightValue, REMOVE, SCALAR));
-    } else {
-      result.push(new Diff(leftKey, leftValue, NONE, SCALAR));
-    }
     return result;
   }
 
@@ -101,17 +133,17 @@ function getDiffRepresentation(left, right) {
       var rightType = _getType(right[i]);
       if(leftType === rightType) {
         if(leftType === SCALAR) {
-          result = result.concat(_getScalarsDiff(null, left[i], null,  right[i]));
+          result = result.concat(strategy.getScalarsDiff(null, left[i], null,  right[i]));
         } else if(leftType === OBJECT) {
-          result.push(new Diff(null, _getJsonsDiff(left[i], right[i]), NONE, OBJECT));
+          result.push(strategy.createDiff(null, _getJsonsDiff(left[i], right[i]), NONE, OBJECT));
         } else if(leftType === ARRAY){
-          result.push(new Diff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
+          result.push(strategy.createDiff(null, _getArraysDiff(left[i], right[i]), NONE, ARRAY));
         } else {
-          result.push(new Diff(null, null, NONE, NULL));
+          result.push(strategy.createDiff(null, null, NONE, NULL));
         }
       } else {
-        result.push(new Diff(null, _getInDepthDiff(left[i], ADD), ADD, leftType));
-        result.push(new Diff(null, _getInDepthDiff(right[i], REMOVE), REMOVE, rightType));
+        result.push(strategy.createDiff(null, _getInDepthDiff(left[i], ADD), ADD, leftType));
+        result.push(strategy.createDiff(null, _getInDepthDiff(right[i], REMOVE), REMOVE, rightType));
       }
     }
 
@@ -119,7 +151,7 @@ function getDiffRepresentation(left, right) {
     for(var i = minLength;i < excessArrayInfo["array"].length ;i++) {
       var val = excessArrayInfo["array"][i];
       var op = excessArrayInfo["operation"];
-      result.push(new Diff(null, _getInDepthDiff(val, op), op, _getType(val)));
+      result.push(strategy.createDiff(null, _getInDepthDiff(val, op), op, _getType(val)));
     }
 
     return result;
@@ -129,30 +161,30 @@ function getDiffRepresentation(left, right) {
     var result = [];
 
     for(var key in left) {
-      if(!right.hasOwnProperty(key)) result.push(new Diff(key, _getInDepthDiff(left[key], ADD), ADD, _getType(left[key])));
+      if(!right.hasOwnProperty(key)) result.push(strategy.createDiff(key, _getInDepthDiff(left[key], ADD), ADD, _getType(left[key])));
       else {
         var leftType = _getType(left[key]);
         var rightType = _getType(right[key]);
         if(leftType === rightType) {
           if (leftType === SCALAR) {
-            result = result.concat(_getScalarsDiff(key, left[key], key,  right[key]));
+            result = result.concat(strategy.getScalarsDiff(key, left[key], key,  right[key]));
           } else if (leftType === OBJECT) {
-            result.push(new Diff(key, _getJsonsDiff(left[key], right[key]), NONE, OBJECT));
+            result.push(strategy.createDiff(key, _getJsonsDiff(left[key], right[key]), NONE, OBJECT));
           } else if(leftType == ARRAY){
-            result.push(new Diff(key, _getArraysDiff(left[key], right[key]), NONE, ARRAY));
+            result.push(strategy.createDiff(key, _getArraysDiff(left[key], right[key]), NONE, ARRAY));
           } else {
-            result.push(new Diff(key, null, NONE, NULL));
+            result.push(strategy.createDiff(key, null, NONE, NULL));
           }
         } else {
-          result.push(new Diff(key, _getInDepthDiff(left[key], ADD), ADD, leftType));
-          result.push(new Diff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, rightType));
+          result.push(strategy.createDiff(key, _getInDepthDiff(left[key], ADD), ADD, leftType));
+          result.push(strategy.createDiff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, rightType));
         }
       }
     }
 
     for(var key in right) {
       if(!left.hasOwnProperty(key)) {
-        result.push(new Diff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, _getType(right[key])));
+        result.push(strategy.createDiff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, _getType(right[key])));
       }
     }
 
@@ -178,6 +210,8 @@ function getDiffRepresentation(left, right) {
       {"json": parsedJson, "exception": null} : {"json": parsedJson, "exception": "Input is not a valid JSON"};
   }
 
+  strategy = typeof strategy !== 'undefined' ? strategy : new ComparingValueStrategy();
+
   var leftParseResult = _parseJson(left);
   var rightParseResult = _parseJson(right);
 
@@ -190,6 +224,7 @@ function getDiffRepresentation(left, right) {
   if(leftJsonType === ARRAY && rightJsonType === ARRAY) return new TopDiff(ARRAY, _getArraysDiff(leftJson, rightJson));
   else if(leftJsonType === OBJECT && rightJsonType === OBJECT) return new TopDiff(OBJECT, _getJsonsDiff(leftJson, rightJson));
   else {
+    strategy = new ComparingValueStrategy();
     var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, leftJsonType);
     var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, rightJsonType);
     return new TopDiff(NULL, [leftOutput, rightOutput]);
