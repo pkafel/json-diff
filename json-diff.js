@@ -11,6 +11,9 @@ NULL = "NULL";
 OBJECT = "OBJECT";
 SCALAR = "SCALAR";
 
+// OTHER
+NON_RELEVANT_VALUE = "..."
+
 //// OBJECTS
 function Diff(key, value, op, valueType) {
   this.key = key;
@@ -50,18 +53,20 @@ function ComparingKeyStrategy () {
     var result = [];
     if(leftKey !== null) {
       if(leftKey !== rightKey) {
-        result.push(new Diff(leftKey, "...", ADD, SCALAR), new Diff(rightKey, "...", REMOVE, SCALAR));
+        result.push(new Diff(leftKey, NON_RELEVANT_VALUE, ADD, SCALAR), new Diff(rightKey, NON_RELEVANT_VALUE, REMOVE, SCALAR));
       } else {
-        result.push(new Diff(leftKey, "...", NONE, SCALAR));
+        result.push(new Diff(leftKey, NON_RELEVANT_VALUE, NONE, SCALAR));
       }
     } else {
-      result.push(new Diff(null, "...", NONE, SCALAR));
+      result.push(new Diff(null, NON_RELEVANT_VALUE, NONE, SCALAR));
     }
     return result;
   };
 
   this.createDiff = function(key, value, op, valueType) {
-    if(valueType === SCALAR) return new Diff(key, "...", op, valueType);
+    if(valueType === SCALAR) return new Diff(key, NON_RELEVANT_VALUE, op, valueType);
+    if(key === null && op !== NONE) return new Diff(key, NON_RELEVANT_VALUE, NONE, SCALAR);
+    if(key !== null && op !== NONE) return new Diff(key, NON_RELEVANT_VALUE, op, SCALAR);
     return new Diff(key, value, op, valueType);
   }
 }
