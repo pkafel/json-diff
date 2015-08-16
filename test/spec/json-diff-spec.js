@@ -327,6 +327,25 @@ describe("Get Json diff representation when comparing by keys", function() {
     expect(result.diff[1].valueType).toEqual(SCALAR);
     expect(result.diff[1].value).toEqual(NON_RELEVANT_VALUE);
   });
+
+  it("Array and JSON object have nothing in common so returned diff should represent that", function() {
+    var result = getDiffRepresentation("[1,2]", "{\"a\": \"hello\"}", strategy);
+    expect(result.topType).toEqual(NULL);
+    expect(result.diff[0].op).toEqual(ADD);
+    expect(result.diff[0].valueType).toEqual(ARRAY);
+    expect(result.diff[0].value[0].op).toEqual(ADD);
+    expect(result.diff[0].value[0].valueType).toEqual(SCALAR);
+    expect(result.diff[0].value[0].value).toEqual(1);
+    expect(result.diff[0].value[1].op).toEqual(ADD);
+    expect(result.diff[0].value[1].valueType).toEqual(SCALAR);
+    expect(result.diff[0].value[1].value).toEqual(2);
+    expect(result.diff[1].op).toEqual(REMOVE);
+    expect(result.diff[1].valueType).toEqual(OBJECT);
+    expect(result.diff[1].value[0].op).toEqual(REMOVE);
+    expect(result.diff[1].value[0].valueType).toEqual(SCALAR);
+    expect(result.diff[1].value[0].key).toEqual("a");
+    expect(result.diff[1].value[0].value).toEqual("hello");
+  });
 });
 
 

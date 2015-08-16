@@ -224,6 +224,7 @@ function getDiffRepresentation(left, right, strategy) {
   if(leftJsonType === ARRAY && rightJsonType === ARRAY) return new TopDiff(ARRAY, _getArraysDiff(leftJson, rightJson));
   else if(leftJsonType === OBJECT && rightJsonType === OBJECT) return new TopDiff(OBJECT, _getJsonsDiff(leftJson, rightJson));
   else {
+    strategy = new ComparingValueStrategy();
     var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, leftJsonType);
     var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, rightJsonType);
     return new TopDiff(NULL, [leftOutput, rightOutput]);
