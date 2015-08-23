@@ -46,6 +46,10 @@ function ComparingValueStrategy () {
   this.createDiff = function(key, value, op, valueType) {
     return new Diff(key, value, op, valueType);
   }
+
+  this.createDiffForDifferentTypes = function(key, leftValue, leftOp, leftValType, rightValue, rightOp, rightValType) {
+    return [this.createDiff(key, leftValue, leftOp, leftValType), this.createDiff(key, rightValue, rightOp, rightValType)];
+  }
 }
 
 function ComparingKeyStrategy () {
@@ -68,6 +72,10 @@ function ComparingKeyStrategy () {
     if(key === null && op !== NONE) return new Diff(key, NON_RELEVANT_VALUE, NONE, SCALAR);
     if(key !== null && op !== NONE) return new Diff(key, NON_RELEVANT_VALUE, op, SCALAR);
     return new Diff(key, value, op, valueType);
+  }
+
+  this.createDiffForDifferentTypes = function(key, leftValue, leftOp, leftValType, rightValue, rightOp, rightValType) {
+    return [this.createDiff(key, NON_RELEVANT_VALUE, NONE, SCALAR)];
   }
 }
 
@@ -142,8 +150,8 @@ function getDiffRepresentation(left, right, strategy) {
           result.push(strategy.createDiff(null, null, NONE, NULL));
         }
       } else {
-        result.push(strategy.createDiff(null, _getInDepthDiff(left[i], ADD), ADD, leftType));
-        result.push(strategy.createDiff(null, _getInDepthDiff(right[i], REMOVE), REMOVE, rightType));
+        result = result.concat(strategy.createDiffForDifferentTypes(
+            null, _getInDepthDiff(left[i], ADD), ADD, leftType, _getInDepthDiff(right[i], REMOVE), REMOVE, rightType));
       }
     }
 
@@ -176,8 +184,8 @@ function getDiffRepresentation(left, right, strategy) {
             result.push(strategy.createDiff(key, null, NONE, NULL));
           }
         } else {
-          result.push(strategy.createDiff(key, _getInDepthDiff(left[key], ADD), ADD, leftType));
-          result.push(strategy.createDiff(key, _getInDepthDiff(right[key], REMOVE), REMOVE, rightType));
+          result = result.concat(strategy.createDiffForDifferentTypes(
+              key, _getInDepthDiff(left[key], ADD), ADD, leftType, _getInDepthDiff(right[key], REMOVE), REMOVE, rightType));
         }
       }
     }

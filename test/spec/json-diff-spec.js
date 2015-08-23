@@ -346,8 +346,15 @@ describe("Get Json diff representation when comparing by keys", function() {
     expect(result.diff[1].value[0].key).toEqual("a");
     expect(result.diff[1].value[0].value).toEqual("hello");
   });
-});
 
+  it("Two jsons with the same single key but different structure under it should be the same", function() {
+    var result = getDiffRepresentation("{\"a\":[]}", "{\"a\":{}}", strategy);
+    expect(result.topType).toEqual(OBJECT);
+    expect(result.diff[0].op).toEqual(NONE);
+    expect(result.diff[0].valueType).toEqual(SCALAR);
+    expect(result.diff[0].value).toEqual("...");
+  });
+});
 
 describe("Json diff exception handling", function() {
   it("Diff should throw exception with correct error message when left json is invalid", function() {
