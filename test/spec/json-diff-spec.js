@@ -1,6 +1,6 @@
 describe("Get Json diff representation when comparing by values", function() {
 
-  var strategy = new ComparingValueStrategy();
+  var strategy = new ComparingKeyAndValueStrategy();
 
   it("For two arrays with different value should return correct diff", function() {
     var result = getDiffRepresentation("[1,2]", "[4,5]", strategy);

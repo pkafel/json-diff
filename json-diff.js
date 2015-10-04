@@ -32,7 +32,7 @@ function ValidationException(leftError, rightError) {
   this.rightError = rightError;
 }
 
-function ComparingValueStrategy () {
+function ComparingKeyAndValueStrategy () {
   this.getScalarsDiff = function(leftKey, leftValue, rightKey, rightValue) {
     var result = [];
     if(leftValue !== rightValue) {
@@ -218,7 +218,7 @@ function getDiffRepresentation(left, right, strategy) {
       {"json": parsedJson, "exception": null} : {"json": parsedJson, "exception": "Input is not a valid JSON"};
   }
 
-  strategy = typeof strategy !== 'undefined' ? strategy : new ComparingValueStrategy();
+  strategy = typeof strategy !== 'undefined' ? strategy : new ComparingKeyAndValueStrategy();
 
   var leftParseResult = _parseJson(left);
   var rightParseResult = _parseJson(right);
@@ -232,7 +232,7 @@ function getDiffRepresentation(left, right, strategy) {
   if(leftJsonType === ARRAY && rightJsonType === ARRAY) return new TopDiff(ARRAY, _getArraysDiff(leftJson, rightJson));
   else if(leftJsonType === OBJECT && rightJsonType === OBJECT) return new TopDiff(OBJECT, _getJsonsDiff(leftJson, rightJson));
   else {
-    strategy = new ComparingValueStrategy();
+    strategy = new ComparingKeyAndValueStrategy();
     var leftOutput = new Diff(null, _getInDepthDiff(leftJson, ADD), ADD, leftJsonType);
     var rightOutput = new Diff(null, _getInDepthDiff(rightJson, REMOVE), REMOVE, rightJsonType);
     return new TopDiff(NULL, [leftOutput, rightOutput]);
